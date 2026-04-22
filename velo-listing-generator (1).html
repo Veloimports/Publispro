@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Velo Imports — Listing Generator</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;500;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0a0a0a;--bg2:#111111;--bg3:#181818;--bg4:#1f1f1f;--border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.13);--text:#f0f0f0;--text2:#888;--text3:#555;--accent:#c8f04a;--accent2:rgba(200,240,74,0.12);--accent3:rgba(200,240,74,0.05);--danger:#ff4d4d;--danger2:rgba(255,77,77,0.1);--success:#4dff91;--success2:rgba(77,255,145,0.1);--info:#4db8ff;--info2:rgba(77,184,255,0.1)}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;min-height:100vh}
+.header{display:flex;align-items:center;justify-content:space-between;padding:18px 32px;border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100;background:rgba(10,10,10,0.96);backdrop-filter:blur(12px)}
+.logo{font-family:'Syne',sans-serif;font-weight:800;font-size:16px;letter-spacing:-0.02em}.logo span{color:var(--accent)}
+.header-badge{font-family:'DM Mono',monospace;font-size:10px;color:var(--text3);letter-spacing:0.08em;border:1px solid var(--border2);padding:4px 10px;border-radius:100px}
+.container{max-width:820px;margin:0 auto;padding:0 24px}
+.main{padding:36px 0 80px}
+.tabs{display:flex;border-bottom:1px solid var(--border);margin-bottom:28px;overflow-x:auto;gap:0}
+.tab{padding:10px 18px;font-family:'DM Mono',monospace;font-size:11px;letter-spacing:0.04em;cursor:pointer;border:none;background:transparent;color:var(--text3);border-bottom:2px solid transparent;margin-bottom:-1px;white-space:nowrap;transition:color 0.15s}
+.tab:hover{color:var(--text2)}.tab.active{color:var(--accent);border-bottom-color:var(--accent)}.tab:disabled{opacity:0.3;cursor:not-allowed}
+.panel{display:none}.panel.active{display:block}
+.slabel{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--text3);margin-bottom:7px}
+.upload-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px}
+.upload-zone{border:1px dashed var(--border2);border-radius:12px;padding:18px 14px;text-align:center;cursor:pointer;transition:all 0.2s;min-height:96px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;position:relative}
+.upload-zone:hover{border-color:var(--accent);background:var(--accent3)}
+.upload-zone input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.uz-icon{font-size:18px;opacity:0.35;font-family:'DM Mono',monospace}
+.uz-title{font-size:13px;font-weight:500}.uz-sub{font-size:11px;color:var(--text3)}.uz-opt{font-size:10px;color:var(--text3);border:1px solid var(--border);padding:2px 8px;border-radius:100px;margin-top:2px}
+.previews{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.preview-wrap{position:relative;width:46px;height:46px}
+.preview-wrap img{width:46px;height:46px;object-fit:cover;border-radius:7px;border:1px solid var(--border2)}
+.remove-img{position:absolute;top:-4px;right:-4px;width:15px;height:15px;border-radius:50%;background:var(--danger);color:#fff;border:none;cursor:pointer;font-size:9px;display:flex;align-items:center;justify-content:center;line-height:1}
+.analyzed-tag{font-size:11px;color:var(--success);margin-top:6px;font-family:'DM Mono',monospace;line-height:1.4}
+.detail-box{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:18px;margin-bottom:18px}
+.detail-box-title{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--text3);margin-bottom:14px}
+.field{margin-bottom:13px}
+.field label{display:block;font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text3);margin-bottom:5px}
+.field input,.field select,.field textarea{width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;outline:none;transition:border-color 0.15s}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--border2)}
+.field textarea{resize:vertical;min-height:56px;line-height:1.5}
+.field select{appearance:none;cursor:pointer}
+.field .hint{font-size:11px;color:var(--text3);margin-top:5px;font-family:'DM Mono',monospace}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.color-row{display:flex;align-items:center;gap:10px}
+.color-swatch{width:36px;height:36px;border-radius:8px;border:1px solid var(--border2);cursor:pointer;padding:0;flex-shrink:0;background:none}
+.img-toggle{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)}
+.img-toggle:last-child{border-bottom:none}
+.toggle-check{width:15px;height:15px;cursor:pointer;accent-color:var(--accent)}
+.img-num{font-family:'DM Mono',monospace;font-size:10px;color:var(--accent);background:var(--accent2);border:1px solid rgba(200,240,74,0.15);padding:2px 8px;border-radius:100px;flex-shrink:0}
+.img-label{font-size:13px;font-weight:500;flex:1}
+.btn-primary{width:100%;padding:12px;font-family:'Syne',sans-serif;font-size:14px;font-weight:700;letter-spacing:0.02em;cursor:pointer;border-radius:10px;border:none;background:var(--accent);color:#0a0a0a;transition:all 0.15s;margin-top:6px}
+.btn-primary:hover{background:#d4f55a;transform:translateY(-1px)}.btn-primary:active{transform:translateY(0)}.btn-primary:disabled{opacity:0.4;cursor:not-allowed;transform:none}
+.btn-sm{padding:5px 11px;font-size:11px;font-family:'DM Mono',monospace;cursor:pointer;border-radius:6px;border:1px solid var(--border2);background:transparent;color:var(--text2);white-space:nowrap;transition:all 0.15s}
+.btn-sm:hover{background:var(--bg4);color:var(--text)}.btn-sm.copied{color:var(--success);border-color:rgba(77,255,145,0.3)}.btn-sm.regen{color:var(--danger);border-color:rgba(255,77,77,0.25)}
+.btn-secondary{width:100%;padding:11px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:500;cursor:pointer;border-radius:10px;border:1px solid var(--border2);background:transparent;color:var(--text2);transition:all 0.15s;margin-top:8px}
+.btn-secondary:hover{background:var(--bg3);color:var(--text)}
+.mood-box{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:14px 16px;margin-bottom:18px;font-size:13px;color:var(--text2);line-height:1.75}
+.mood-box strong{color:var(--text);font-weight:500}
+.badge-accent{display:inline-block;font-size:11px;font-family:'DM Mono',monospace;padding:2px 8px;border-radius:100px;background:var(--accent2);color:var(--accent);border:1px solid rgba(200,240,74,0.2)}
+.step-card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:18px;margin-bottom:10px;transition:border-color 0.2s}
+.step-card:hover{border-color:var(--border2)}
+.step-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:11px}
+.step-meta{display:flex;align-items:center;gap:8px}
+.step-nombre{font-family:'Syne',sans-serif;font-size:14px;font-weight:600}
+.step-actions{display:flex;gap:6px}
+.ref-hint{font-size:11px;color:var(--info);background:var(--info2);border-radius:7px;padding:7px 10px;margin-bottom:9px;line-height:1.5;font-family:'DM Mono',monospace;border:1px solid rgba(77,184,255,0.15)}
+.ref-hint strong{font-weight:500}
+.prompt-section{margin-bottom:9px}
+.prompt-section-label{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:0.1em;text-transform:uppercase;color:var(--text3);margin-bottom:4px}
+.prompt-fixed{font-size:11px;color:var(--text3);font-family:'DM Mono',monospace;background:var(--bg3);border-radius:7px;padding:7px 10px;line-height:1.5;border:1px solid var(--border)}
+.step-text-edit{width:100%;font-size:13px;border:1px solid var(--border);border-radius:7px;padding:7px 10px;font-family:'DM Sans',sans-serif;background:var(--bg3);color:var(--text);resize:vertical;min-height:34px;margin-bottom:7px;outline:none;transition:border-color 0.15s;line-height:1.5}
+.step-text-edit:focus{border-color:var(--border2)}
+.prompt-body{font-size:11px;color:var(--text2);font-family:'DM Mono',monospace;line-height:1.7;white-space:pre-wrap;background:var(--bg3);border-radius:7px;padding:9px 10px;border:1px solid var(--border)}
+.prompt-body.pulse{opacity:0.35;animation:pulse 1.2s infinite}
+@keyframes pulse{0%,100%{opacity:0.35}50%{opacity:0.75}}
+.title-card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:16px 18px;margin-bottom:10px}
+.title-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:9px}
+.title-kw{font-family:'DM Mono',monospace;font-size:11px;color:var(--text3)}.title-kw em{color:var(--accent);font-style:normal}
+.title-text{font-family:'Syne',sans-serif;font-size:16px;font-weight:600;color:var(--text);margin-bottom:5px;line-height:1.4}
+.chars-ok{font-family:'DM Mono',monospace;font-size:10px;color:var(--success)}
+.chars-warn{font-family:'DM Mono',monospace;font-size:10px;color:#f0a500}
+.chars-bad{font-family:'DM Mono',monospace;font-size:10px;color:var(--danger)}
+.drive-banner{display:flex;align-items:center;gap:10px;background:var(--success2);border:1px solid rgba(77,255,145,0.2);border-radius:9px;padding:9px 13px;margin-bottom:14px;font-family:'DM Mono',monospace;font-size:11px;color:var(--success)}
+.drive-banner a{color:var(--success);font-weight:500;text-decoration:none}.drive-banner a:hover{text-decoration:underline}
+.drive-saving{font-family:'DM Mono',monospace;font-size:11px;color:var(--text3);margin-bottom:10px;padding:6px 0}
+.history-empty{font-family:'DM Mono',monospace;font-size:12px;color:var(--text3);padding:32px 0;text-align:center}
+.history-item{display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--border)}
+.history-item:last-child{border-bottom:none}
+.history-name{font-size:13px;font-weight:500;color:var(--text);margin-bottom:2px}
+.history-sub{font-family:'DM Mono',monospace;font-size:11px;color:var(--accent)}
+.history-date{font-family:'DM Mono',monospace;font-size:11px;color:var(--text3)}
+.divider{border:none;border-top:1px solid var(--border);margin:22px 0}
+.error-box{color:var(--danger);font-size:12px;padding:9px 12px;background:var(--danger2);border-radius:8px;margin-top:9px;font-family:'DM Mono',monospace;border:1px solid rgba(255,77,77,0.2)}
+.kw-note{background:var(--bg2);border:1px solid var(--border);border-radius:9px;padding:12px 14px;margin-bottom:16px;font-family:'DM Mono',monospace;font-size:11px;color:var(--text3);line-height:1.6}
+.kw-note strong{color:var(--accent);font-weight:500}
+
+/* API KEY MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:1000;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
+.modal-overlay.hidden{display:none}
+.modal-box{background:var(--bg2);border:1px solid var(--border2);border-radius:16px;padding:32px;max-width:440px;width:90%;text-align:center}
+.modal-logo{font-family:'Syne',sans-serif;font-weight:800;font-size:20px;margin-bottom:8px}.modal-logo span{color:var(--accent)}
+.modal-sub{font-family:'DM Mono',monospace;font-size:11px;color:var(--text3);margin-bottom:24px;letter-spacing:0.04em}
+.modal-label{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text3);margin-bottom:6px;text-align:left}
+.modal-input{width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px 12px;color:var(--text);font-family:'DM Mono',monospace;font-size:13px;outline:none;margin-bottom:8px;transition:border-color 0.15s}
+.modal-input:focus{border-color:var(--border2)}
+.modal-hint{font-family:'DM Mono',monospace;font-size:10px;color:var(--text3);margin-bottom:20px;text-align:left;line-height:1.5}
+.modal-hint a{color:var(--accent);text-decoration:none}
+.api-badge{position:fixed;bottom:16px;right:16px;font-family:'DM Mono',monospace;font-size:10px;color:var(--text3);border:1px solid var(--border);padding:4px 10px;border-radius:100px;cursor:pointer;z-index:50;background:var(--bg2);transition:all 0.15s}
+.api-badge:hover{color:var(--text2);border-color:var(--border2)}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="logo">Velo<span>Imports</span></div>
+  <div class="header-badge">Listing Generator v1.0</div>
+</div>
+
+<div class="container main">
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('input')">01 — Producto</button>
+    <button class="tab" id="tab-prompts" onclick="switchTab('prompts')">02 — Prompts</button>
+    <button class="tab" id="tab-titulos" onclick="switchTab('titulos')">03 — Títulos ML</button>
+    <button class="tab" onclick="switchTab('historial')">04 — Historial</button>
+  </div>
+
+  <!-- PANEL INPUT -->
+  <div class="panel active" id="panel-input">
+    <div class="upload-grid">
+      <div>
+        <div class="slabel">Fotos del proveedor</div>
+        <div class="upload-zone" onclick="document.getElementById('upProd').click()">
+          <input type="file" id="upProd" accept="image/*" multiple style="display:none" onchange="handleFiles(this,'producto')">
+          <div class="uz-icon">↑</div>
+          <div class="uz-title">Subir fotos</div>
+          <div class="uz-sub">JPG, PNG — múltiples ángulos</div>
+        </div>
+        <div class="previews" id="prev-producto"></div>
+        <div class="analyzed-tag" id="analyzed-producto"></div>
+      </div>
+      <div>
+        <div class="slabel">Referencia de estilo</div>
+        <div class="upload-zone" onclick="document.getElementById('upEstilo').click()">
+          <input type="file" id="upEstilo" accept="image/*" multiple style="display:none" onchange="handleFiles(this,'estilo')">
+          <div class="uz-icon">↑</div>
+          <div class="uz-title">Subir referencias</div>
+          <div class="uz-sub">Listings que te gustan</div>
+          <div class="uz-opt">opcional</div>
+        </div>
+        <div class="previews" id="prev-estilo"></div>
+      </div>
+    </div>
+
+    <div class="detail-box">
+      <div class="detail-box-title">Detalles del producto</div>
+      <div class="field">
+        <label>Sub-marca</label>
+        <select id="submarca">
+          <option>VeloHealth™</option>
+          <option>VeloPet™</option>
+          <option>VeloHome™</option>
+          <option>VeloTech™</option>
+          <option>VeloCare™</option>
+          <option>Velomotor™</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Color exacto del producto</label>
+        <div class="color-row">
+          <input type="color" class="color-swatch" id="colorPicker" value="#1a1a1a">
+          <input type="text" id="colorNombre" placeholder="Ej: negro mate, azul marino, blanco perla" style="flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;outline:none">
+        </div>
+        <p class="hint" style="margin-top:5px;font-family:'DM Mono',monospace;font-size:11px;color:var(--text3)">Prioridad sobre el color de las fotos si difieren.</p>
+      </div>
+      <div class="field">
+        <label>Descripción manual adicional</label>
+        <textarea id="descManual" placeholder="Materiales, texturas, tamaño, partes, mecanismo — lo que no se ve en fotos"></textarea>
+      </div>
+      <div class="field">
+        <label>Especificaciones técnicas clave</label>
+        <textarea id="specs" placeholder="Ej: 4 puntas, waterproof, long lasting, 12cm" style="min-height:42px"></textarea>
+        <p class="hint">Se usan como callouts en features y zonas.</p>
+      </div>
+      <div class="grid2">
+        <div class="field">
+          <label>Beneficio principal</label>
+          <input type="text" id="beneficio" placeholder="Ej: Barba perfecta en minutos">
+        </div>
+        <div class="field">
+          <label>Público objetivo</label>
+          <input type="text" id="publico" placeholder="Ej: Hombres 25-40">
+        </div>
+      </div>
+    </div>
+
+    <div class="slabel" style="margin-bottom:8px">Imágenes activas</div>
+    <div class="detail-box" style="padding:4px 18px">
+      <div class="img-toggle"><input type="checkbox" class="toggle-check" checked data-idx="0"><span class="img-num">01</span><span class="img-label">Hero — producto solo, fondo blanco</span></div>
+      <div class="img-toggle"><input type="checkbox" class="toggle-check" checked data-idx="1"><span class="img-num">02</span><span class="img-label">Problema / Solución</span></div>
+      <div class="img-toggle"><input type="checkbox" class="toggle-check" checked data-idx="2"><span class="img-num">03</span><span class="img-label">Comparación — marca vs genérico</span></div>
+      <div class="img-toggle"><input type="checkbox" class="toggle-check" checked data-idx="3"><span class="img-num">04</span><span class="img-label">Zonas de uso / casos de uso</span></div>
+      <div class="img-toggle"><input type="checkbox" class="toggle-check" checked data-idx="4"><span class="img-num">05</span><span class="img-label">Features del producto</span></div>
+      <div class="img-toggle"><input type="checkbox" class="toggle-check" checked data-idx="5"><span class="img-num">06</span><span class="img-label">Paso a paso</span></div>
+      <div class="img-toggle"><input type="checkbox" class="toggle-check" checked data-idx="6"><span class="img-num">07</span><span class="img-label">Lifestyle argentino</span></div>
+      <div class="img-toggle"><input type="checkbox" class="toggle-check" checked data-idx="7"><span class="img-num">08</span><span class="img-label">Contenido del paquete</span></div>
+    </div>
+
+    <button class="btn-primary" id="btnAnalizar" onclick="analizar()">Analizar y generar prompts ↗</button>
+    <div id="input-error"></div>
+  </div>
+
+  <!-- PANEL PROMPTS -->
+  <div class="panel" id="panel-prompts">
+    <div id="drive-status"></div>
+    <div id="mood-display"></div>
+    <div id="prompts-list"></div>
+    <div class="divider"></div>
+    <button class="btn-secondary" onclick="switchTab('titulos')">Ir a Títulos ML →</button>
+  </div>
+
+  <!-- PANEL TITULOS -->
+  <div class="panel" id="panel-titulos">
+    <div class="detail-box">
+      <div class="detail-box-title">Generar títulos</div>
+      <div class="field">
+        <label>Descripción del producto</label>
+        <input type="text" id="tit-producto" placeholder="Ej: Lápiz rellenador de barba negro mate 4 puntas waterproof">
+      </div>
+      <div class="field">
+        <label>Sub-marca</label>
+        <select id="tit-submarca">
+          <option>VeloHealth™</option>
+          <option>VeloPet™</option>
+          <option>VeloHome™</option>
+          <option>VeloTech™</option>
+          <option>VeloCare™</option>
+          <option>Velomotor™</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Keywords reales de ML autocomplete <span style="color:var(--accent);font-size:10px">(opcional pero recomendado)</span></label>
+        <textarea id="tit-keywords" placeholder="Pegá las sugerencias del buscador de ML Argentina&#10;Ej: lapiz relleno barba, lapiz barba hombre, beard pencil" style="min-height:56px"></textarea>
+        <p class="hint">Buscá el producto en mercadolibre.com.ar y copiá el autocomplete.</p>
+      </div>
+      <button class="btn-primary" id="btnTitulos" onclick="generarTitulosIndependiente()">Generar títulos ↗</button>
+    </div>
+    <div class="kw-note">
+      <strong>Tip:</strong> Si venís desde el panel de Producto, los títulos ya están generados abajo. Este formulario es para cuando querés generar títulos solos sin hacer prompts.
+    </div>
+    <div id="titulos-list"></div>
+  </div>
+
+  <!-- PANEL HISTORIAL -->
+  <div class="panel" id="panel-historial">
+    <div id="historial-list"></div>
+  </div>
+</div>
+
+<script>
+const FOLDER_IDS={
+  'VeloHealth™':'1VQfqP24VCMRyQfXjKSmqxiWqZ3yxQ_hK',
+  'VeloPet™':'1OZVeDbAawj9VL-JXDtAr-OF8mjITW0bx',
+  'VeloHome™':'14JU_XECg-_4XqqJH-hlTfPcMiDLT2N3J',
+  'VeloTech™':'1UsDqFAxjHi_H717f89t2CpOWOK1UrCQu',
+  'VeloCare™':'13odIDb-nN-WMbJ7G1ECdqdus6vi2GABH',
+  'Velomotor™':'1gSLoWfQvizZwGehmrbD0ok9S8LswzqE9'
+};
+
+const IMAGENES=[
+  {idx:0,num:1,nombre:"Hero",desc:"clean white studio background, product perfectly centered and lit, pure white backdrop, no dark elements whatsoever"},
+  {idx:1,num:2,nombre:"Problema / Solución",desc:"before/after scene showing the problem the user faces and how the product solves it dramatically, cinematic dark mood"},
+  {idx:2,num:3,nombre:"Comparación",desc:"dark comparison layout — generic product on the LEFT with muted gray label, brand product on the RIGHT with bold white label showing FULL KIT, comparison table below with green checkmarks for brand and red X for generic, last row ALWAYS '30 días de garantía'"},
+  {idx:3,num:4,nombre:"Zonas de uso",desc:"product shown with multiple thin white callout annotation lines pointing to zones of use or body parts, dark cinematic background"},
+  {idx:4,num:5,nombre:"Features",desc:"product centered with bold technical annotation callouts pointing to each key feature using the specs provided, dark editorial layout"},
+  {idx:5,num:6,nombre:"Paso a paso",desc:"3 to 4 numbered visual steps showing how to use the product, dark background with clear step indicators"},
+  {idx:6,num:7,nombre:"Lifestyle argentino",desc:"Argentine-looking person using the product in a real everyday Argentine context, cinematic dark mood, natural and authentic"},
+  {idx:7,num:8,nombre:"Contenido del paquete",desc:"all included items laid out neatly on a dark surface with real measurements annotated for each item, overhead or slight angle view"},
+];
+
+const OPENING="Recreate this exact image in the new format.";
+const CLOSING=s=>`"${s}" in small elegant white text, bottom right corner, minimum 300px from bottom edge. All text in safe zone. 1:1 format, 2160x2160px, 4K resolution, professional commercial editorial style. Cinematic moody dark lighting, photorealistic, no CGI effects.`;
+const CLOSING_HERO=s=>`"${s}" in small elegant white text, bottom right corner, minimum 300px from bottom edge. All text in safe zone. 1:1 format, 2160x2160px, 4K resolution, professional commercial product photography, pure white background, clean studio lighting, photorealistic.`;
+
+let b64={producto:[],estilo:[]};
+let fileNames={producto:[],estilo:[]};
+let moodData=null,imageTexts={},imageRefs={},generatedPrompts={};
+let currentProductName='';
+let _titulos=[];
+let driveSaveTriggered=false;
+
+function switchTab(n){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById('panel-'+n).classList.add('active');
+  document.querySelector(`.tab[onclick="switchTab('${n}')"]`)?.classList.add('active');
+  if(n==='historial')renderHistorial();
+}
+
+function handleFiles(input,type){
+  const prev=document.getElementById('prev-'+type);
+  Array.from(input.files).forEach(f=>{
+    const reader=new FileReader();
+    reader.onload=e=>{
+      const url=e.target.result;
+      const gi=b64[type].length;
+      b64[type].push(url.split(',')[1]);
+      fileNames[type].push(f.name);
+      const wrap=document.createElement('div');wrap.className='preview-wrap';
+      const img=document.createElement('img');img.src=url;img.title=`Foto ${gi+1}`;
+      const rm=document.createElement('button');rm.className='remove-img';rm.textContent='×';
+      rm.onclick=ev=>{ev.stopPropagation();b64[type].splice(gi,1);fileNames[type].splice(gi,1);wrap.remove();};
+      wrap.appendChild(img);wrap.appendChild(rm);prev.appendChild(wrap);
+    };
+    reader.readAsDataURL(f);
+  });
+  input.value='';
+}
+
+function val(id){return document.getElementById(id)?.value.trim()||'';}
+function getActiveIdxs(){return Array.from(document.querySelectorAll('.toggle-check')).filter(c=>c.checked).map(c=>parseInt(c.dataset.idx));}
+function escH(t){return(t||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function getColorDesc(){const n=val('colorNombre');const h=document.getElementById('colorPicker')?.value||'';return n||(h&&h!='#1a1a1a'?h:'');}
+function buildImgParts(arr,label){if(!arr.length)return[];return[{type:'text',text:label},...arr.map(d=>({type:'image',source:{type:'base64',media_type:'image/jpeg',data:d}}))];}
+function buildFullPrompt(cuerpo,idx){const s=val('submarca');const c=idx===0?CLOSING_HERO(s):CLOSING(s);return`${OPENING} ${cuerpo} ${c}`;}
+
+async function analizar(){
+  const errEl=document.getElementById('input-error');
+  const beneficio=val('beneficio'),descManual=val('descManual');
+  if(!b64.producto.length&&!beneficio&&!descManual){errEl.innerHTML='<div class="error-box">Subí fotos del producto o describilo manualmente.</div>';return;}
+  errEl.innerHTML='';
+  generatedPrompts={};driveSaveTriggered=false;
+  const btn=document.getElementById('btnAnalizar');
+  btn.disabled=true;btn.textContent='Analizando...';
+
+  const submarca=val('submarca'),colorDesc=getColorDesc(),specs=val('specs'),publico=val('publico');
+  const activeIdxs=getActiveIdxs();
+  const fotoNombres=fileNames.producto.map((n,i)=>`Foto ${i+1}: ${n}`).join(', ')||'no photos';
+
+  const content=[
+    ...buildImgParts(b64.producto,'Product photos from supplier (numbered in order):'),
+    ...buildImgParts(b64.estilo,'Visual style references:'),
+    {type:'text',text:`Sub-brand: ${submarca}
+${colorDesc?'EXACT PRODUCT COLOR (override photos if different): '+colorDesc:''}
+${descManual?'Manual description: '+descManual:''}
+${specs?'Technical specs for callouts: '+specs:''}
+Benefit: ${beneficio||'infer from photos'}
+Target: ${publico||'infer from product'}
+Photos available: ${fotoNombres}
+Active image indexes: ${JSON.stringify(activeIdxs)}
+
+For each active image provide:
+- texto_propuesto: on-image text in SPANISH (max 8 words, impactful)
+- foto_referencia: which supplier photo number to use in Higgsfield and why (specific and actionable)
+
+Respond ONLY valid JSON no markdown:
+{"producto_descripcion":"exact physical description with correct color","mood":"mood in 2 lines","color_acento":"hex + name","iluminacion":"lighting","escenario":"scene","modelo":"model profile or null","imagenes":[{"idx":0,"texto_propuesto":"...","foto_referencia":"..."}]}`}
+  ];
+
+  const sys=`Expert art director for Mercado Libre Argentina e-commerce listings. RULES: exact color overrides photos always. idx 0 Hero: pure white background, no dark. idx 1+: cinematic dark mood defined by the specific product. No logos. Text safe zone: never bottom 250px. idx 2 comparison: generic LEFT muted gray label, brand RIGHT bold white with full kit shown, checkmark table, last row always "30 días de garantía". Respond ONLY valid JSON.`;
+
+  try{
+    const res=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:2000,system:sys,messages:[{role:"user",content}]})});
+    const data=await res.json();
+    const txt=data.content.map(i=>i.text||'').join('').replace(/```json|```/g,'').trim();
+    moodData=JSON.parse(txt);
+    moodData.imagenes.forEach(i=>{imageTexts[i.idx]=i.texto_propuesto;imageRefs[i.idx]=i.foto_referencia||'';});
+    currentProductName=moodData.producto_descripcion?.split(' ').slice(0,5).join(' ')||'Producto';
+    if(moodData.producto_descripcion) document.getElementById('analyzed-producto').textContent='✓ '+moodData.producto_descripcion.substring(0,100)+'...';
+    renderPrompts(activeIdxs);
+    renderTitulos();
+    switchTab('prompts');
+  }catch(e){errEl.innerHTML=`<div class="error-box">Error: ${e.message}</div>`;}
+  btn.disabled=false;btn.textContent='Analizar y generar prompts ↗';
+}
+
+function renderPrompts(activeIdxs){
+  const md=document.getElementById('mood-display');
+  if(moodData) md.innerHTML=`<div class="mood-box">
+    <strong>Producto:</strong> ${escH(moodData.producto_descripcion||'')}<br>
+    <strong>Mood:</strong> ${escH(moodData.mood)}<br>
+    <strong>Color acento:</strong> <span class="badge-accent">${escH(moodData.color_acento)}</span>&nbsp;
+    <strong>Iluminación:</strong> ${escH(moodData.iluminacion)}<br>
+    <strong>Escenario:</strong> ${escH(moodData.escenario)}${moodData.modelo?`<br><strong>Modelo:</strong> ${escH(moodData.modelo)}`:''}
+  </div>`;
+
+  const list=document.getElementById('prompts-list');list.innerHTML='';
+  activeIdxs.forEach(idx=>{
+    const img=IMAGENES[idx];
+    const card=document.createElement('div');card.className='step-card';card.id=`card-${idx}`;
+    card.innerHTML=`
+      <div class="step-header">
+        <div class="step-meta">
+          <span class="img-num">0${img.num}</span>
+          <span class="step-nombre">${img.nombre}</span>
+        </div>
+        <div class="step-actions">
+          <button class="btn-sm regen" onclick="regenerarImagen(${idx})">↺ Regenerar</button>
+          <button class="btn-sm" id="copy-${idx}" onclick="copiarPrompt(${idx})">Copiar prompt</button>
+        </div>
+      </div>
+      ${imageRefs[idx]?`<div class="ref-hint"><strong>Referencia Higgsfield:</strong> ${escH(imageRefs[idx])}</div>`:''}
+      <div class="prompt-section">
+        <div class="prompt-section-label">Apertura fija</div>
+        <div class="prompt-fixed">${escH(OPENING)}</div>
+      </div>
+      <div class="prompt-section">
+        <div class="prompt-section-label">Texto en imagen — editá si querés</div>
+        <textarea class="step-text-edit" id="texto-${idx}" onchange="imageTexts[${idx}]=this.value;reconstruirPrompt(${idx})">${escH(imageTexts[idx]||'')}</textarea>
+      </div>
+      <div class="prompt-section">
+        <div class="prompt-section-label">Prompt generado</div>
+        <div class="prompt-body pulse" id="prompt-out-${idx}">Generando...</div>
+      </div>
+      <div class="prompt-section">
+        <div class="prompt-section-label">Cierre fijo</div>
+        <div class="prompt-fixed">${escH(idx===0?CLOSING_HERO(val('submarca')):CLOSING(val('submarca')))}</div>
+      </div>`;
+    list.appendChild(card);
+    generarPromptIndividual(idx);
+  });
+}
+
+async function generarPromptIndividual(idx){
+  const outEl=document.getElementById(`prompt-out-${idx}`);
+  if(!outEl)return;
+  outEl.classList.add('pulse');outEl.textContent='Generando...';
+
+  const img=IMAGENES[idx];
+  const submarca=val('submarca'),colorDesc=getColorDesc(),specs=val('specs');
+  const productoDesc=moodData?.producto_descripcion||val('beneficio');
+  const textoImagen=document.getElementById(`texto-${idx}`)?.value||imageTexts[idx]||'';
+
+  const content=[
+    ...buildImgParts(b64.producto.slice(0,2),'Product photos:'),
+    ...buildImgParts(b64.estilo.slice(0,1),'Style reference:'),
+    {type:'text',text:`Generate ONLY the middle body of a Higgsfield prompt (no opening phrase, no closing format specs).
+
+Sub-brand: ${submarca}
+Product: ${productoDesc}
+${colorDesc?'EXACT COLOR (use this, ignore photo color if different): '+colorDesc:''}
+${specs?'Technical specs for callouts: '+specs:''}
+Mood: ${moodData?.mood||'cinematic dark premium'}
+Accent color: ${moodData?.color_acento||''}
+Lighting: ${moodData?.iluminacion||'dramatic side lighting'}
+Scene: ${moodData?.escenario||''}
+${moodData?.modelo?'Model: '+moodData.modelo:''}
+
+Image ${img.num} — ${img.nombre}: ${img.desc}
+On-image text in SPANISH: "${textoImagen}"
+
+CRITICAL RULES:
+- All prompt in English, except the Spanish on-image text
+- Use exact color specified — do NOT use photo color if different
+- Text position must be in safe zone (upper area or center — NEVER bottom 250px)
+- For comparison (img 3): generic LEFT with gray muted label, brand RIGHT with bold white label + full kit, checkmark table below, last row always "30 días de garantía"
+- For features/zones: include specific annotation callouts using the technical specs
+- Be cinematic, specific, and detailed
+
+Respond ONLY the prompt body, plain text, no explanations.`}
+  ];
+
+  const sys=`Higgsfield AI prompt body generator for Mercado Libre e-commerce listings. Output ONLY the scene description body — no opening phrase, no closing format specs. On-image text always in Spanish. Manual color always overrides photo color. Comparison image: generic left gray, brand right bold white with full kit, checkmark table, last row always "30 días de garantía".`;
+
+  try{
+    const res=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:700,system:sys,messages:[{role:"user",content}]})});
+    const data=await res.json();
+    const cuerpo=data.content.map(i=>i.text||'').join('').trim();
+    generatedPrompts[idx]=buildFullPrompt(cuerpo,idx);
+    outEl.textContent=cuerpo;
+    const activeIdxs=getActiveIdxs();
+    if(activeIdxs.every(i=>generatedPrompts[i]))triggerDriveSave();
+  }catch(e){outEl.textContent=`Error: ${e.message}`;}
+  outEl.classList.remove('pulse');
+}
+
+function reconstruirPrompt(idx){
+  const cuerpo=document.getElementById(`prompt-out-${idx}`)?.textContent||'';
+  generatedPrompts[idx]=buildFullPrompt(cuerpo,idx);
+}
+
+async function regenerarImagen(idx){
+  driveSaveTriggered=false;
+  const t=document.getElementById(`texto-${idx}`)?.value;
+  if(t!==undefined)imageTexts[idx]=t;
+  await generarPromptIndividual(idx);
+}
+
+function copiarPrompt(idx){
+  const full=generatedPrompts[idx]||'';
+  if(!full)return;
+  navigator.clipboard.writeText(full).then(()=>{
+    const btn=document.getElementById(`copy-${idx}`);
+    if(btn){btn.textContent='Copiado ✓';btn.classList.add('copied');setTimeout(()=>{btn.textContent='Copiar prompt';btn.classList.remove('copied');},2000);}
+  });
+}
+
+async function triggerDriveSave(){
+  if(driveSaveTriggered)return;
+  driveSaveTriggered=true;
+  const statusEl=document.getElementById('drive-status');
+  if(statusEl)statusEl.innerHTML='<div class="drive-saving">Guardando en Google Drive...</div>';
+  const url=await guardarEnDrive();
+  if(url&&statusEl){
+    statusEl.innerHTML=`<div class="drive-banner">✓ Guardado en Drive — <a href="${url}" target="_blank">Abrir archivo ↗</a></div>`;
+  }else if(statusEl){statusEl.innerHTML='';}
+}
+
+async function guardarEnDrive(){
+  const submarca=val('submarca');
+  const folderId=FOLDER_IDS[submarca];
+  if(!folderId)return null;
+  const fecha=new Date().toISOString().split('T')[0];
+  const nombre=`${currentProductName} — ${fecha}`;
+  let txt=`VELO IMPORTS — LISTING GENERATOR\nProducto: ${moodData?.producto_descripcion||''}\nSub-marca: ${submarca}\nColor: ${getColorDesc()||'(auto)'}\nFecha: ${fecha}\n\n${'='.repeat(60)}\nPROMPTS HIGGSFIELD\n${'='.repeat(60)}\n\n`;
+  Object.entries(generatedPrompts).forEach(([idx,prompt])=>{
+    const img=IMAGENES[parseInt(idx)];
+    txt+=`IMAGEN ${img.num} — ${img.nombre.toUpperCase()}\n`;
+    if(imageRefs[idx])txt+=`Referencia: ${imageRefs[idx]}\n`;
+    txt+=`${prompt}\n\n`;
+  });
+  if(_titulos.length){
+    txt+=`${'='.repeat(60)}\nTÍTULOS ML\n${'='.repeat(60)}\n\n`;
+    _titulos.forEach(t=>{txt+=`Variante ${t.variante} (${t.chars} chars): ${t.titulo}\n`;});
+  }
+  const b64c=btoa(unescape(encodeURIComponent(txt)));
+  try{
+    const res=await fetch("https://api.anthropic.com/v1/messages",{
+      method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({
+        model:"claude-sonnet-4-20250514",max_tokens:500,
+        mcp_servers:[{type:"url",url:"https://drivemcp.googleapis.com/mcp/v1",name:"gdrive"}],
+        messages:[{role:"user",content:`Create a file in Google Drive: parentId "${folderId}", title "${nombre}.txt", mimeType "text/plain", disableConversionToGoogleType true, content base64: ${b64c}`}]
+      })
+    });
+    const data=await res.json();
+    const toolResult=data.content?.find(b=>b.type==='mcp_tool_result');
+    if(toolResult){
+      const parsed=JSON.parse(toolResult.content?.[0]?.text||'{}');
+      if(parsed.id){
+        saveHistory(nombre,submarca,parsed.viewUrl||`https://drive.google.com/file/d/${parsed.id}`);
+        return parsed.viewUrl||`https://drive.google.com/file/d/${parsed.id}`;
+      }
+    }
+  }catch(e){console.error('Drive error:',e);}
+  return null;
+}
+
+function saveHistory(nombre,submarca,url){
+  try{
+    const h=JSON.parse(localStorage.getItem('velo_history')||'[]');
+    h.unshift({nombre,submarca,url,fecha:new Date().toISOString()});
+    localStorage.setItem('velo_history',JSON.stringify(h.slice(0,50)));
+  }catch(e){}
+}
+
+function renderHistorial(){
+  const list=document.getElementById('historial-list');
+  try{
+    const h=JSON.parse(localStorage.getItem('velo_history')||'[]');
+    if(!h.length){list.innerHTML='<div class="history-empty">No hay productos guardados todavía.</div>';return;}
+    list.innerHTML='';
+    h.forEach(item=>{
+      const d=new Date(item.fecha).toLocaleDateString('es-AR');
+      const el=document.createElement('div');el.className='history-item';
+      el.innerHTML=`<div><div class="history-name">${escH(item.nombre)}</div><div class="history-sub">${escH(item.submarca)}</div></div><div style="display:flex;align-items:center;gap:10px"><span class="history-date">${d}</span><a href="${escH(item.url)}" target="_blank"><button class="btn-sm">Ver en Drive</button></a></div>`;
+      list.appendChild(el);
+    });
+  }catch(e){list.innerHTML='<div class="error-box">Error cargando historial.</div>';}
+}
+
+async function renderTitulos(){
+  const list=document.getElementById('titulos-list');
+  list.innerHTML='<div style="font-family:\'DM Mono\',monospace;font-size:11px;color:var(--text3);padding:8px 0">Generando títulos...</div>';
+  const submarca=val('submarca'),beneficio=val('beneficio');
+  const productoDesc=moodData?.producto_descripcion||beneficio||val('descManual');
+
+  const content=[
+    ...buildImgParts(b64.producto.slice(0,1),'Product photo:'),
+    {type:'text',text:`Product: ${productoDesc}
+Sub-brand: ${submarca}
+
+Generate 3 optimized Mercado Libre Argentina titles based on the product. ONLY JSON no markdown:
+{"titulos":[{"variante":1,"keyword_primaria":"...","titulo":"...","chars":0}]}`}
+  ];
+
+  const sys=`SEO expert for Mercado Libre Argentina. RULES: max 60 chars, descriptive keyword first, no punctuation, no unnecessary caps, no filler words like "excelente" or "increible", 3 variants with different primary keywords. ONLY JSON.`;
+
+  try{
+    const res=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:600,system:sys,messages:[{role:"user",content}]})});
+    const data=await res.json();
+    const txt=data.content.map(i=>i.text||'').join('').replace(/```json|```/g,'').trim();
+    const parsed=JSON.parse(txt);
+    _titulos=parsed.titulos;
+    list.innerHTML='';
+    parsed.titulos.forEach(t=>{
+      const chars=t.titulo.length;
+      const cls=chars<=50?'chars-ok':chars<=60?'chars-warn':'chars-bad';
+      const card=document.createElement('div');card.className='title-card';
+      card.innerHTML=`
+        <div class="title-header">
+          <span class="title-kw">keyword — <em>${escH(t.keyword_primaria)}</em></span>
+          <button class="btn-sm" onclick="copiarTexto(this,'${escH(t.titulo)}')">Copiar</button>
+        </div>
+        <div class="title-text">${escH(t.titulo)}</div>
+        <div class="${cls}">${chars}/60 caracteres</div>`;
+      list.appendChild(card);
+    });
+  }catch(e){list.innerHTML=`<div class="error-box">Error: ${e.message}</div>`;}
+}
+
+function copiarTexto(btn,text){
+  navigator.clipboard.writeText(text).then(()=>{
+    btn.textContent='Copiado ✓';btn.classList.add('copied');
+    setTimeout(()=>{btn.textContent='Copiar';btn.classList.remove('copied');},2000);
+  });
+}
+
+async function generarTitulosIndependiente(){
+  const list=document.getElementById('titulos-list');
+  const btn=document.getElementById('btnTitulos');
+  const producto=document.getElementById('tit-producto')?.value.trim()||'';
+  const submarca=document.getElementById('tit-submarca')?.value||'VeloHealth™';
+  const keywords=document.getElementById('tit-keywords')?.value.trim()||'';
+  if(!producto&&!moodData){list.innerHTML='<div class="error-box">Ingresá la descripción del producto.</div>';return;}
+  btn.disabled=true;btn.textContent='Generando...';
+  list.innerHTML='<div style="font-family:DM Mono,monospace;font-size:11px;color:var(--text3);padding:8px 0">Generando títulos...</div>';
+  const productoDesc=producto||moodData?.producto_descripcion||'';
+  const imgParts=b64.producto.length?[{type:'text',text:'Product photo:'},...b64.producto.slice(0,1).map(d=>({type:'image',source:{type:'base64',media_type:'image/jpeg',data:d}}))]:[]; 
+  const content=[...imgParts,{type:'text',text:'Product: '+productoDesc+'\nSub-brand: '+submarca+(keywords?'\nReal ML autocomplete keywords: '+keywords:'')+'\n\nGenerate 3 optimized Mercado Libre Argentina titles. '+(keywords?'Use the real keywords provided.':'Use descriptive keywords based on the product.')+' ONLY JSON no markdown:\n{"titulos":[{"variante":1,"keyword_primaria":"...","titulo":"...","chars":0}]}'}];
+  const sys='SEO expert for Mercado Libre Argentina. RULES: max 60 chars, real keyword first if provided, no punctuation, no unnecessary caps, no filler words, 3 variants with different primary keywords. ONLY JSON.';
+  try{
+    const res=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:600,system:sys,messages:[{role:"user",content}]})});
+    const data=await res.json();
+    const txt=data.content.map(i=>i.text||'').join('').replace(/```json|```/g,'').trim();
+    const parsed=JSON.parse(txt);
+    _titulos=parsed.titulos;
+    list.innerHTML='';
+    parsed.titulos.forEach(t=>{
+      const chars=t.titulo.length;
+      const cls=chars<=50?'chars-ok':chars<=60?'chars-warn':'chars-bad';
+      const card=document.createElement('div');card.className='title-card';
+      card.innerHTML='<div class="title-header"><span class="title-kw">keyword — <em>'+t.keyword_primaria+'</em></span><button class="btn-sm" onclick="copiarTexto(this,''+t.titulo.replace(/'/g,"\'")+'')" >Copiar</button></div><div class="title-text">'+t.titulo+'</div><div class="'+cls+'">'+chars+'/60 caracteres</div>';
+      list.appendChild(card);
+    });
+  }catch(e){list.innerHTML='<div class="error-box">Error: '+e.message+'</div>';}
+  btn.disabled=false;btn.textContent='Generar títulos ↗';
+}
+
+// API KEY MANAGEMENT
+function getApiKey(){return localStorage.getItem('velo_api_key')||'';}
+
+function guardarApiKey(){
+  const k=document.getElementById('apiKeyInput')?.value.trim();
+  if(!k||!k.startsWith('sk-')){alert('Ingresá una API key válida (empieza con sk-)');return;}
+  localStorage.setItem('velo_api_key',k);
+  document.getElementById('apiModal').classList.add('hidden');
+}
+
+function resetApiKey(){
+  if(confirm('¿Cambiar la API key?')){
+    localStorage.removeItem('velo_api_key');
+    location.reload();
+  }
+}
+
+function checkApiKey(){
+  const k=getApiKey();
+  if(!k){
+    document.getElementById('apiModal').classList.remove('hidden');
+    document.querySelector('.api-badge').style.display='none';
+  } else {
+    document.getElementById('apiModal').classList.add('hidden');
+    document.querySelector('.api-badge').style.display='block';
+  }
+}
+
+// Override fetch to always inject API key
+const _origFetch=window.fetch;
+window.fetch=function(url,...args){
+  if(url==='https://api.anthropic.com/v1/messages'){
+    const key=getApiKey();
+    if(args[0]&&args[0].headers){
+      args[0].headers['x-api-key']=key;
+      args[0].headers['anthropic-version']='2023-06-01';
+      args[0].headers['anthropic-dangerous-direct-browser-access']='true';
+    }
+  }
+  return _origFetch(url,...args);
+};
+
+window.addEventListener('DOMContentLoaded',checkApiKey);
+
+</script>
+
+<!-- API KEY MODAL -->
+<div class="modal-overlay" id="apiModal">
+  <div class="modal-box">
+    <div class="modal-logo">Velo<span>Imports</span></div>
+    <div class="modal-sub">Listing Generator — Configuración inicial</div>
+    <div class="modal-label">Anthropic API Key</div>
+    <input type="password" class="modal-input" id="apiKeyInput" placeholder="sk-ant-api03-...">
+    <div class="modal-hint">
+      Conseguí tu key en <a href="https://console.anthropic.com" target="_blank">console.anthropic.com</a><br>
+      Se guarda localmente en tu navegador. No se comparte con nadie.
+    </div>
+    <button class="btn-primary" onclick="guardarApiKey()">Guardar y continuar ↗</button>
+  </div>
+</div>
+<div class="api-badge" onclick="resetApiKey()" title="Cambiar API Key">API Key ✓</div>
+</body>
+</html>
